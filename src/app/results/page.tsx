@@ -4,7 +4,7 @@ type Props = {}
 
 function Results({}: Props) {
   return (
-    <div>page</div>
+    <div className='text-red-200'>page</div>
   )
 }
 

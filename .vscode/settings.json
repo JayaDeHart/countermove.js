@@ -1,0 +1,24 @@
+// {
+//     "typescript.updateImportsOnFileMove.enabled": "always",
+//     "tailwindCSS.includeLanguages": {
+//       "html": "html",
+//       "javascript": "javascript",
+//       "css": "css",
+//       "typescript": "javascript",
+//       "typescriptreact": "javascript",
+//       "plaintext": "javascript"
+//   },
+//   "files.associations": {
+//   "*.css": "tailwindcss"
+//   },
+//   "tailwindCSS.experimental.classRegex": [
+//       "tw`([^`]*)",
+//       "tw\\(([^)]*)",
+//       "tw\\{([^}]*)"
+//     ],
+//     "tailwindCSS.experimental.configFile": "Ubuntu/home/jayadehart/projects/countermove.js/tailwind.config.ts",
+//     "editor.quickSuggestions": {
+//       "strings": true
+//   },
+//   "git.ignoreMissingGitWarning": true
+//   }
