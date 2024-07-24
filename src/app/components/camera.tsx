@@ -50,6 +50,7 @@ const CameraComponent = (props: CameraProps) => {
   };
 
   function getRecordingFunction() {
+    console.log("recording");
     if (recording) {
       stopRecording();
     } else {
