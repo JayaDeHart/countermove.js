@@ -1,11 +1,12 @@
 "use client";
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import { FaRegCircleStop } from "react-icons/fa6";
 import { FaVideo } from "react-icons/fa";
 import { FaRedo } from "react-icons/fa";
 import { observer } from "mobx-react-lite";
 import { VideoStore } from "../context/videoStore";
 import { VideoContext } from "../context/videoContext";
+import { FaPause, FaPlay } from "react-icons/fa6";
 
 interface CameraProps {
   number: number;
@@ -13,9 +14,12 @@ interface CameraProps {
 
 const CameraComponent = (props: CameraProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const recordedVideoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [recording, setRecording] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>("");
+  const [isPlaying, setIsPlaying] = useState(false);
+
   const store = useContext(VideoContext);
 
   const startRecording = async () => {
@@ -50,7 +54,7 @@ const CameraComponent = (props: CameraProps) => {
   };
 
   function getRecordingFunction() {
-    console.log("recording");
+    setVideoUrl("");
     if (recording) {
       stopRecording();
     } else {
@@ -61,7 +65,7 @@ const CameraComponent = (props: CameraProps) => {
   function getVideoIcon() {
     const iconProps = {
       color: "white",
-      size: 40,
+      size: 60,
     };
     if (!videoUrl && !recording) {
       return <FaVideo {...iconProps} />;
@@ -76,17 +80,29 @@ const CameraComponent = (props: CameraProps) => {
     }
   }
 
+  const handlePlayVideo = () => {
+    if (recordedVideoRef.current) {
+      if (recordedVideoRef.current.paused) {
+        recordedVideoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        recordedVideoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
+
   return (
-    <div className="bg-slate-200">
+    <div className="h-full w-full flex flex-col items-center">
       <div
-        className="border border-black border-solid p-24 hover:cursor-pointer relative inline-block h-full w-full"
+        className="bg-slate-200 border border-black border-solid m-1 hover:cursor-pointer relative inline-block h-full w-full"
         onClick={getRecordingFunction}
       >
         {!videoUrl && (
           <video
-            className="absolute top-0 left-0 w-full h-full"
+            className="absolute top-0 left-0 w-full h-full object-cover"
             ref={videoRef}
-            autoPlay={recording}
+            autoPlay
           ></video>
         )}
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
@@ -94,12 +110,21 @@ const CameraComponent = (props: CameraProps) => {
         </div>
         {videoUrl && (
           <video
-            className="absolute top-0 left-0 w-full h-full"
+            className="absolute top-0 left-0 w-full h-full object-cover"
             src={videoUrl}
-            controls
+            ref={recordedVideoRef}
+            onEnded={() => setIsPlaying(false)}
           ></video>
         )}
       </div>
+      {videoUrl && (
+        <button
+          onClick={handlePlayVideo}
+          className="bg-slate-600 text-white font-bold py-2 px-4 rounded hover:bg-slate-700 flex items-center justify-center"
+        >
+          {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} />}
+        </button>
+      )}
     </div>
   );
 };

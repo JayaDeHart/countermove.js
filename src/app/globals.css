@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  height: 100vh;
+}
+
+@font-face {
+  font-family: "Maestro";
+  src: url("../../public/Maestro-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-maestro {
+  font-family: "Maestro", sans-serif;
+}
+
+@font-face {
+  font-family: "Avenger";
+  src: url("../../public/avenger.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-avenger {
+  font-family: "Avenger", sans-serif;
+}
+
+@font-face {
+  font-family: "Avengers";
+  src: url("../../public/avengers.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.font-avengers {
+  font-family: "Avengers", sans-serif;
+}

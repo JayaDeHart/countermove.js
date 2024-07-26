@@ -14,9 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <VideoStoreProvider store={videoStore}>
-        <body className={inter.className}>{children}</body>
-      </VideoStoreProvider>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
