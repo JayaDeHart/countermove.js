@@ -7,6 +7,7 @@ import { observer } from "mobx-react-lite";
 import { VideoStore } from "../context/videoStore";
 import { VideoContext } from "../context/videoContext";
 import { FaPause, FaPlay } from "react-icons/fa6";
+import PlayPauseButton from "./playPause";
 
 interface CameraProps {
   number: number;
@@ -117,14 +118,11 @@ const CameraComponent = (props: CameraProps) => {
           ></video>
         )}
       </div>
-      {videoUrl && (
-        <button
-          onClick={handlePlayVideo}
-          className="bg-slate-600 text-white font-bold py-2 px-4 rounded hover:bg-slate-700 flex items-center justify-center"
-        >
-          {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} />}
-        </button>
-      )}
+      <PlayPauseButton
+        isPlaying={isPlaying}
+        handlePlayPause={handlePlayVideo}
+        disabled={!videoUrl}
+      />
     </div>
   );
 };

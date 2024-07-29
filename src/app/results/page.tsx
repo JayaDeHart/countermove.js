@@ -11,9 +11,11 @@ import { VideoContext } from "../context/videoContext";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
-import { drawKeypoints, drawSkeleton } from "../utilities/canvas";
+import { drawKeypoints, drawResults, drawSkeleton } from "../utilities/canvas";
 import videoStore from "../context/videoStore";
 import VideoStoreProvider from "../context/videoContext";
+import { drawCtx } from "../utilities/canvas";
+import PlayPauseButton from "../components/playPause";
 
 type Props = {};
 
@@ -22,6 +24,7 @@ function Results({}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const store = useContext(VideoContext);
   const [model, setModel] = useState<poseDetection.PoseDetector | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const animationFrameId = useRef<number | null>(null);
 
   const detectorConfig = {
@@ -42,37 +45,18 @@ function Results({}: Props) {
     loadModel();
   }, []);
 
-  console.log("canvas:", canvasRef);
-
   const detectPose = useCallback(async () => {
     if (videoRef.current && canvasRef.current && model) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
-      console.log("ctx", ctx);
-
-      // canvas.width = video.videoWidth;
-      // canvas.height = video.videoHeight;
       canvas.width = 480;
       canvas.height = 640;
 
       const poses = await model.estimatePoses(video);
-      console.log(poses);
-
       if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        poses.forEach((pose) => {
-          drawSkeleton(pose.keypoints, 0.5, ctx);
-          pose.keypoints.forEach(({ x, y, score, name }) => {
-            if (score! > 0.5) {
-              ctx.beginPath();
-              ctx.arc(x, y, 1, 0, 2 * Math.PI);
-              ctx.fillStyle = "red";
-              ctx.fill();
-              ctx.fillText(name || "unknown", x + 5, y + 5, 50);
-            }
-          });
-        });
+        drawCtx(video, ctx);
+        drawResults(poses, ctx);
       }
 
       animationFrameId.current = requestAnimationFrame(detectPose);
@@ -92,9 +76,17 @@ function Results({}: Props) {
     }
   }, []);
 
+  console.log(videoRef.current?.paused);
+
   const handlePlayVideo = () => {
     if (videoRef.current) {
-      videoRef.current.play();
+      if (!videoRef.current.paused) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play();
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -106,7 +98,8 @@ function Results({}: Props) {
           src={store.videos[0]}
           onPlay={handleVideoPlay}
           onPause={handleVideoPause}
-          style={{ display: "block", zIndex: 10 }}
+          style={{ display: "none", zIndex: 10 }}
+          onEnded={() => setIsPlaying(false)}
         />
         <canvas
           ref={canvasRef}
@@ -118,7 +111,16 @@ function Results({}: Props) {
             height: 480,
           }}
         />
-        <div className="h-7 w-8 bg-black" onClick={handlePlayVideo}></div>
+        <PlayPauseButton
+          isPlaying={isPlaying}
+          handlePlayPause={handlePlayVideo}
+          disabled={false}
+          style={{
+            position: "absolute",
+            top: 500,
+            left: 500,
+          }}
+        />
       </div>
     </VideoStoreProvider>
   );
@@ -127,3 +129,5 @@ function Results({}: Props) {
 export default observer(Results);
 
 // https://codesandbox.io/s/posenet-react-hm35t?file=/src/utilities.js
+
+// https://github.dev/tensorflow/tfjs-models/tree/master/pose-detection/demos/upload_video/src

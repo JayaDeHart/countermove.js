@@ -4,40 +4,40 @@ import * as poseDetection from "@tensorflow-models/pose-detection";
 const color = "black";
 const lineWidth = 2;
 
-function toTuple({ x, y }: { x: number; y: number }): [number, number] {
-  return [x, y];
-}
+// function toTuple({ x, y }: { x: number; y: number }): [number, number] {
+//   return [x, y];
+// }
 
-export function drawPoint(
-  ctx: CanvasRenderingContext2D,
-  y: number,
-  x: number,
-  r: number,
-  color: string
-) {
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, 2 * Math.PI);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
+// export function drawPoint(
+//   ctx: CanvasRenderingContext2D,
+//   y: number,
+//   x: number,
+//   r: number,
+//   color: string
+// ) {
+//   ctx.beginPath();
+//   ctx.arc(x, y, r, 0, 2 * Math.PI);
+//   ctx.fillStyle = color;
+//   ctx.fill();
+// }
 
-/**
- * Draws a line on a canvas, i.e. a joint
- */
-export function drawSegment(
-  [ay, ax]: [number, number],
-  [by, bx]: [number, number],
-  color: string,
-  scale: number,
-  ctx: CanvasRenderingContext2D
-) {
-  ctx.beginPath();
-  ctx.moveTo(ax * scale, ay * scale);
-  ctx.lineTo(bx * scale, by * scale);
-  ctx.lineWidth = lineWidth;
-  ctx.strokeStyle = color;
-  ctx.stroke();
-}
+// /**
+//  * Draws a line on a canvas, i.e. a joint
+//  */
+// export function drawSegment(
+//   [ay, ax]: [number, number],
+//   [by, bx]: [number, number],
+//   color: string,
+//   scale: number,
+//   ctx: CanvasRenderingContext2D
+// ) {
+//   ctx.beginPath();
+//   ctx.moveTo(ax * scale, ay * scale);
+//   ctx.lineTo(bx * scale, by * scale);
+//   ctx.lineWidth = lineWidth;
+//   ctx.strokeStyle = color;
+//   ctx.stroke();
+// }
 
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
@@ -46,55 +46,155 @@ export function drawSegment(
 /**
  * Draw pose keypoints onto a canvas
  */
-export function drawKeypoints(
-  keypoints: Keypoint[],
-  minConfidence: number,
-  ctx: CanvasRenderingContext2D,
-  scale = 1
+// export function drawKeypoints(
+//   keypoints: Keypoint[],
+//   minConfidence: number,
+//   ctx: CanvasRenderingContext2D,
+//   scale = 1
+// ) {
+//   for (let i = 0; i < keypoints.length; i++) {
+//     const keypoint = keypoints[i];
+
+//     if (keypoint.score! < minConfidence) {
+//       continue;
+//     }
+
+//     const { y, x } = keypoint;
+//     drawPoint(ctx, y * scale, x * scale, 3, color);
+//   }
+// }
+
+// export function drawSkeleton(
+//   keypoints: Keypoint[],
+//   minConfidence: number,
+//   ctx: CanvasRenderingContext2D,
+//   scale = 1
+// ) {
+//   const adjacentKeyPoints = poseDetection.util.getAdjacentPairs(
+//     poseDetection.SupportedModels.MoveNet
+//   );
+
+//   console.log(adjacentKeyPoints);
+
+//   adjacentKeyPoints.forEach(([leftJoint, rightJoint]) => {
+//     const leftKeypoint = keypoints[leftJoint];
+//     const rightKeypoint = keypoints[rightJoint];
+
+//     if (
+//       leftKeypoint.score! >= minConfidence &&
+//       rightKeypoint.score! >= minConfidence
+//     ) {
+//       let leftpos = {
+//         x: leftKeypoint.x,
+//         y: leftKeypoint.y,
+//       };
+//       let rightpos = {
+//         x: rightKeypoint.x,
+//         y: rightKeypoint.y,
+//       };
+//       drawSegment(toTuple(leftpos), toTuple(rightpos), "red", scale, ctx);
+//     }
+//   });
+// }
+
+export function drawCtx(
+  video: HTMLVideoElement,
+  ctx: CanvasRenderingContext2D
 ) {
-  for (let i = 0; i < keypoints.length; i++) {
-    const keypoint = keypoints[i];
+  ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+}
 
-    if (keypoint.score! < minConfidence) {
-      continue;
-    }
+export function drawResults(
+  poses: poseDetection.Pose[],
+  ctx: CanvasRenderingContext2D
+) {
+  for (const pose of poses) {
+    drawResult(pose, ctx);
+  }
+}
 
-    const { y, x } = keypoint;
-    drawPoint(ctx, y * scale, x * scale, 3, color);
+/**
+ * Draw the keypoints and skeleton on the video.
+ * @param pose A pose with keypoints to render.
+ */
+export function drawResult(
+  pose: poseDetection.Pose,
+  ctx: CanvasRenderingContext2D
+) {
+  if (pose.keypoints != null) {
+    drawKeypoints(pose.keypoints, ctx);
+    drawSkeleton(pose.keypoints, ctx);
   }
 }
 
 export function drawSkeleton(
   keypoints: Keypoint[],
-  minConfidence: number,
-  ctx: CanvasRenderingContext2D,
-  scale = 1
+  ctx: CanvasRenderingContext2D
 ) {
-  const adjacentKeyPoints = poseDetection.util.getAdjacentPairs(
+  ctx.fillStyle = "White";
+  ctx.strokeStyle = "White";
+  ctx.lineWidth = 1;
+
+  poseDetection.util
+    .getAdjacentPairs(poseDetection.SupportedModels.MoveNet)
+    .forEach(([i, j]) => {
+      const kp1 = keypoints[i];
+      const kp2 = keypoints[j];
+
+      // If score is null, just show the keypoint.
+      const score1 = kp1.score != null ? kp1.score : 1;
+      const score2 = kp2.score != null ? kp2.score : 1;
+      const scoreThreshold = 0.3;
+
+      if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
+        ctx.beginPath();
+        ctx.moveTo(kp1.x, kp1.y);
+        ctx.lineTo(kp2.x, kp2.y);
+        ctx.stroke();
+      }
+    });
+}
+
+export function drawKeypoints(
+  keypoints: Keypoint[],
+  ctx: CanvasRenderingContext2D
+) {
+  const keypointInd = poseDetection.util.getKeypointIndexBySide(
     poseDetection.SupportedModels.MoveNet
   );
+  ctx.fillStyle = "White";
+  ctx.strokeStyle = "White";
+  ctx.lineWidth = 1;
 
-  console.log(adjacentKeyPoints);
+  for (const i of keypointInd.middle) {
+    drawKeypoint(keypoints[i], ctx);
+  }
 
-  adjacentKeyPoints.forEach(([leftJoint, rightJoint]) => {
-    const leftKeypoint = keypoints[leftJoint];
-    const rightKeypoint = keypoints[rightJoint];
+  ctx.fillStyle = "Green";
+  for (const i of keypointInd.left) {
+    drawKeypoint(keypoints[i], ctx);
+  }
 
-    if (
-      leftKeypoint.score! >= minConfidence &&
-      rightKeypoint.score! >= minConfidence
-    ) {
-      let leftpos = {
-        x: leftKeypoint.x,
-        y: leftKeypoint.y,
-      };
-      let rightpos = {
-        x: rightKeypoint.x,
-        y: rightKeypoint.y,
-      };
-      drawSegment(toTuple(leftpos), toTuple(rightpos), "red", scale, ctx);
-    }
-  });
+  ctx.fillStyle = "Orange";
+  for (const i of keypointInd.right) {
+    drawKeypoint(keypoints[i], ctx);
+  }
+}
+
+export function drawKeypoint(
+  keypoint: Keypoint,
+  ctx: CanvasRenderingContext2D
+) {
+  // If score is null, just show the keypoint.
+  const score = keypoint.score != null ? keypoint.score : 1;
+  const scoreThreshold = 0.3 || 0;
+
+  if (score >= scoreThreshold) {
+    const circle = new Path2D();
+    circle.arc(keypoint.x, keypoint.y, 1, 0, 2 * Math.PI);
+    ctx.fill(circle);
+    ctx.stroke(circle);
+  }
 }
 
 const kp = {
