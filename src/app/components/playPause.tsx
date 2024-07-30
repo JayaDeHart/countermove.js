@@ -18,7 +18,7 @@ const PlayPauseButton = ({
     <button
       onClick={handlePlayPause}
       disabled={disabled}
-      className={`bg-slate-600 text-white font-bold py-2 px-4 rounded flex items-center justify-center ${
+      className={`bg-slate-600 text-white font-bold py-2 px-4 rounded flex items-center justify-center m-2 ${
         disabled ? "bg-gray-400 cursor-default" : "hover:bg-slate-700"
       }`}
       style={style}

@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useRef, useState, useEffect } from "react";
+import { useContext, useRef, useState, useEffect, ChangeEvent } from "react";
 import { FaRegCircleStop } from "react-icons/fa6";
 import { FaVideo } from "react-icons/fa";
 import { FaRedo } from "react-icons/fa";
@@ -17,6 +17,7 @@ const CameraComponent = (props: CameraProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const recordedVideoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [recording, setRecording] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -93,6 +94,21 @@ const CameraComponent = (props: CameraProps) => {
     }
   };
 
+  function handleFileClick() {
+    if (fileInputRef.current) {
+      setVideoUrl("");
+      fileInputRef.current.click();
+    }
+  }
+
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) {
+      setVideoUrl(URL.createObjectURL(e.target.files[0]));
+      store.videos[props.number - 1] = URL.createObjectURL(e.target.files[0]);
+      console.log(videoUrl);
+    }
+  }
+
   return (
     <div className="h-full w-full flex flex-col items-center">
       <div
@@ -123,6 +139,19 @@ const CameraComponent = (props: CameraProps) => {
         handlePlayPause={handlePlayVideo}
         disabled={!videoUrl}
       />
+      <input
+        className="hidden"
+        type="file"
+        accept="video/*"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+      />
+      <button
+        className="text-base bg-slate-500 text-white font-bold py-2 px-4 rounded flex items-center justify-center m-2"
+        onClick={handleFileClick}
+      >
+        Upload File
+      </button>
     </div>
   );
 };

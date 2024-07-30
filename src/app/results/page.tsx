@@ -50,8 +50,8 @@ function Results({}: Props) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
-      canvas.width = 480;
-      canvas.height = 640;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
       const poses = await model.estimatePoses(video);
       if (ctx) {
@@ -76,8 +76,6 @@ function Results({}: Props) {
     }
   }, []);
 
-  console.log(videoRef.current?.paused);
-
   const handlePlayVideo = () => {
     if (videoRef.current) {
       if (!videoRef.current.paused) {
@@ -90,27 +88,21 @@ function Results({}: Props) {
     }
   };
 
+  console.log(videoRef.current?.videoWidth);
+
   return (
     <VideoStoreProvider store={store}>
-      <div style={{ position: "relative" }}>
+      <div className="flex flex-col">
+        <h1>Results</h1>
         <video
           ref={videoRef}
           src={store.videos[0]}
           onPlay={handleVideoPlay}
           onPause={handleVideoPause}
-          style={{ display: "none", zIndex: 10 }}
+          style={{ display: "none" }}
           onEnded={() => setIsPlaying(false)}
         />
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 640,
-            height: 480,
-          }}
-        />
+        <canvas ref={canvasRef} />
         <PlayPauseButton
           isPlaying={isPlaying}
           handlePlayPause={handlePlayVideo}
