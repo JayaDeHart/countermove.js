@@ -1,5 +1,6 @@
 import { Keypoint, Pose } from "@tensorflow-models/pose-detection";
 import * as poseDetection from "@tensorflow-models/pose-detection";
+import { GiConsoleController } from "react-icons/gi";
 
 const color = "black";
 const lineWidth = 2;
@@ -97,10 +98,19 @@ const lineWidth = 2;
 //   });
 // }
 
+export function drawThumbnail(
+  image: HTMLImageElement,
+  ctx: CanvasRenderingContext2D
+) {
+  console.log("drawing thumbnail with");
+  ctx.drawImage(image, 0, 0);
+}
+
 export function drawCtx(
   video: HTMLVideoElement,
   ctx: CanvasRenderingContext2D
 ) {
+  console.log("drawing image");
   ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
 }
 

@@ -11,11 +11,10 @@ import { VideoContext } from "../context/videoContext";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
-import { drawKeypoints, drawResults, drawSkeleton } from "../utilities/canvas";
-import videoStore from "../context/videoStore";
-import VideoStoreProvider from "../context/videoContext";
+import { drawResults, drawThumbnail } from "../utilities/canvas";
 import { drawCtx } from "../utilities/canvas";
 import PlayPauseButton from "../components/playPause";
+import Image from "next/image";
 
 type Props = {};
 
@@ -25,10 +24,52 @@ function Results({}: Props) {
   const store = useContext(VideoContext);
   const [model, setModel] = useState<poseDetection.PoseDetector | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loading, setLoading] = useState(true);
   const animationFrameId = useRef<number | null>(null);
+  const frameTime = 20;
 
-  const detectorConfig = {
-    modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
+  const initializeThumbnail = () => {
+    console.log("called");
+    if (videoRef.current && canvasRef.current) {
+      console.log("called with videoRef");
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      // canvas.width = 400;
+      // canvas.height = 400;
+
+      if (ctx) {
+        video.addEventListener("loadeddata", () => {
+          video.currentTime = frameTime;
+        });
+
+        video.addEventListener("seeked", () => {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageSrc = canvas.toDataURL("image/jpeg");
+          const image = new window.Image();
+          image.src = imageSrc;
+          image.onload = () => {
+            drawThumbnail(image, ctx);
+          };
+        });
+      }
+
+      // if (ctx) {
+      //   video.addEventListener("loadeddata", () => {
+      //     drawCtx(video, ctx);
+      //   });
+      // }
+
+      // if (ctx) {
+      //   const image = new window.Image();
+      //   image.src = "/thumbnaildummy.jpeg";
+      //   image.onload = () => {
+      //     drawThumbnail(image, ctx);
+      //   };
+      // }
+    }
   };
 
   useEffect(() => {
@@ -37,24 +78,30 @@ function Results({}: Props) {
       await tf.ready();
       let model = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
-        detectorConfig
+        {
+          modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
+        }
       );
       setModel(model);
+      initializeThumbnail();
     };
 
     loadModel();
   }, []);
 
   const detectPose = useCallback(async () => {
+    console.log("detect pose but no model");
+    console.log(videoRef.current, canvasRef.current, model);
     if (videoRef.current && canvasRef.current && model) {
+      console.log("detectpose but with model");
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
       const poses = await model.estimatePoses(video);
       if (ctx) {
+        console.log("theoretically drawing shit here");
         drawCtx(video, ctx);
         drawResults(poses, ctx);
       }
@@ -88,33 +135,36 @@ function Results({}: Props) {
     }
   };
 
-  console.log(videoRef.current?.videoWidth);
+  useEffect(() => {
+    initializeThumbnail();
+  }, [detectPose, model, loading]);
+
+  console.log(model);
 
   return (
-    <VideoStoreProvider store={store}>
-      <div className="flex flex-col">
-        <h1>Results</h1>
-        <video
-          ref={videoRef}
-          src={store.videos[0]}
-          onPlay={handleVideoPlay}
-          onPause={handleVideoPause}
-          style={{ display: "none" }}
-          onEnded={() => setIsPlaying(false)}
-        />
-        <canvas ref={canvasRef} />
-        <PlayPauseButton
-          isPlaying={isPlaying}
-          handlePlayPause={handlePlayVideo}
-          disabled={false}
-          style={{
-            position: "absolute",
-            top: 500,
-            left: 500,
-          }}
-        />
-      </div>
-    </VideoStoreProvider>
+    <div className="flex flex-col">
+      <h1>Results</h1>
+      <video
+        ref={videoRef}
+        src={store.videos[0]}
+        onPlay={handleVideoPlay}
+        onPause={handleVideoPause}
+        style={{ display: "none" }}
+        onEnded={() => setIsPlaying(false)}
+        onLoad={initializeThumbnail}
+      />
+      <canvas ref={canvasRef} height={500} width={500} />
+      <PlayPauseButton
+        isPlaying={isPlaying}
+        handlePlayPause={handlePlayVideo}
+        disabled={false}
+        style={{
+          position: "absolute",
+          top: 500,
+          left: 500,
+        }}
+      />
+    </div>
   );
 }
 

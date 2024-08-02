@@ -1,9 +1,10 @@
 "use client";
 
-import React, { createContext, ReactNode, useContext } from "react";
-import videoStore, { VideoStore } from "./videoStore";
+import React, { createContext, ReactNode, useContext, useEffect } from "react";
+import { VideoStore } from "./videoStore";
 
-export const VideoContext = createContext<VideoStore>(videoStore);
+const store = new VideoStore([]);
+export const VideoContext = createContext<VideoStore>(store);
 
 interface StoreProviderProps {
   store: VideoStore;
@@ -11,6 +12,13 @@ interface StoreProviderProps {
 }
 
 export default function VideoStoreProvider(props: StoreProviderProps) {
+  useEffect(() => {
+    const videos = localStorage.getItem("videos");
+    if (videos) {
+      props.store.videos = JSON.parse(videos);
+    }
+  }, [props.store]);
+
   return (
     <VideoContext.Provider value={props.store}>
       {props.children}

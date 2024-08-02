@@ -19,10 +19,11 @@ const CameraComponent = (props: CameraProps) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [recording, setRecording] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string>("");
+
   const [isPlaying, setIsPlaying] = useState(false);
 
   const store = useContext(VideoContext);
+  const [videoUrl, setVideoUrl] = useState<string>("");
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -41,7 +42,7 @@ const CameraComponent = (props: CameraProps) => {
     mediaRecorderRef.current.onstop = () => {
       const blob = new Blob(chunks, { type: "video/webm" });
       setVideoUrl(URL.createObjectURL(blob));
-      store.videos[props.number - 1] = URL.createObjectURL(blob);
+      store.addVideo(URL.createObjectURL(blob), props.number);
     };
 
     mediaRecorderRef.current.start();
@@ -104,8 +105,7 @@ const CameraComponent = (props: CameraProps) => {
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files) {
       setVideoUrl(URL.createObjectURL(e.target.files[0]));
-      store.videos[props.number - 1] = URL.createObjectURL(e.target.files[0]);
-      console.log(videoUrl);
+      store.addVideo(URL.createObjectURL(e.target.files[0]), props.number);
     }
   }
 
