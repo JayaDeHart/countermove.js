@@ -11,10 +11,16 @@ import { VideoContext } from "../context/videoContext";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as tf from "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-backend-webgl";
-import { drawResults, drawThumbnail } from "../utilities/canvas";
+import {
+  calculateAngles,
+  drawResults,
+  drawThumbnail,
+  kp,
+} from "../utilities/canvas";
 import { drawCtx } from "../utilities/canvas";
 import PlayPauseButton from "../components/playPause";
 import Image from "next/image";
+import { toJS } from "mobx";
 
 type Props = {};
 
@@ -24,53 +30,37 @@ function Results({}: Props) {
   const store = useContext(VideoContext);
   const [model, setModel] = useState<poseDetection.PoseDetector | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [poseData, setPoseData] = useState<poseDetection.Pose[][]>([]);
+  const [count, setCount] = useState<number>(0);
   const animationFrameId = useRef<number | null>(null);
   const frameTime = 20;
 
-  const initializeThumbnail = () => {
-    console.log("called");
+  const addFrameListener = () => {
     if (videoRef.current && canvasRef.current) {
-      console.log("called with videoRef");
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        video.addEventListener("loadeddata", () => {
+          video.currentTime = frameTime;
+        });
+      }
+    }
+  };
+
+  function doTheThing() {
+    if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      // canvas.width = 400;
-      // canvas.height = 400;
 
       if (ctx) {
-        video.addEventListener("loadeddata", () => {
-          video.currentTime = frameTime;
-        });
-
-        video.addEventListener("seeked", () => {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageSrc = canvas.toDataURL("image/jpeg");
-          const image = new window.Image();
-          image.src = imageSrc;
-          image.onload = () => {
-            drawThumbnail(image, ctx);
-          };
-        });
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       }
-
-      // if (ctx) {
-      //   video.addEventListener("loadeddata", () => {
-      //     drawCtx(video, ctx);
-      //   });
-      // }
-
-      // if (ctx) {
-      //   const image = new window.Image();
-      //   image.src = "/thumbnaildummy.jpeg";
-      //   image.onload = () => {
-      //     drawThumbnail(image, ctx);
-      //   };
-      // }
     }
-  };
+  }
 
   useEffect(() => {
     const loadModel = async () => {
@@ -83,25 +73,22 @@ function Results({}: Props) {
         }
       );
       setModel(model);
-      initializeThumbnail();
     };
 
     loadModel();
   }, []);
 
   const detectPose = useCallback(async () => {
-    console.log("detect pose but no model");
-    console.log(videoRef.current, canvasRef.current, model);
     if (videoRef.current && canvasRef.current && model) {
-      console.log("detectpose but with model");
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const poses = await model.estimatePoses(video);
+      setPoseData((prevPoseData) => [...prevPoseData, poses]);
+      setCount((prevCount) => prevCount + 1);
       if (ctx) {
-        console.log("theoretically drawing shit here");
         drawCtx(video, ctx);
         drawResults(poses, ctx);
       }
@@ -136,10 +123,15 @@ function Results({}: Props) {
   };
 
   useEffect(() => {
-    initializeThumbnail();
-  }, [detectPose, model, loading]);
+    addFrameListener();
+  }, []);
 
-  console.log(model);
+  // console.log(toJS(store.vid1Data));
+  // console.log(count);
+
+  console.log(
+    calculateAngles(kp.keypoints[16], kp.keypoints[14], kp.keypoints[12])
+  );
 
   return (
     <div className="flex flex-col">
@@ -150,10 +142,13 @@ function Results({}: Props) {
         onPlay={handleVideoPlay}
         onPause={handleVideoPause}
         style={{ display: "none" }}
-        onEnded={() => setIsPlaying(false)}
-        onLoad={initializeThumbnail}
+        onEnded={() => {
+          setIsPlaying(false);
+          store.vid1Data = poseData;
+        }}
+        onSeeked={doTheThing}
       />
-      <canvas ref={canvasRef} height={500} width={500} />
+      <canvas ref={canvasRef} />
       <PlayPauseButton
         isPlaying={isPlaying}
         handlePlayPause={handlePlayVideo}
