@@ -4,13 +4,11 @@ import { makeAutoObservable } from "mobx";
 
 export class VideoStore {
   videos: string[];
-  vid1Data: any[];
-  vid2Data: any[];
+  videoData: any[];
 
   constructor(videos: string[] = []) {
     this.videos = videos;
-    this.vid1Data = [];
-    this.vid2Data = [];
+    this.videoData = [];
     makeAutoObservable(this);
   }
 

@@ -28,7 +28,7 @@ function Home() {
           <CameraComponent number={1} />
         </div>
       </div>
-      <Link href="/results">
+      <Link href="/trim">
         <button
           disabled={store.videos.length < 2}
           className={`bg-slate-600 text-white font-bold py-2 px-4 rounded hover:bg-slate-700 ${

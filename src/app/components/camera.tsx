@@ -4,9 +4,7 @@ import { FaRegCircleStop } from "react-icons/fa6";
 import { FaVideo } from "react-icons/fa";
 import { FaRedo } from "react-icons/fa";
 import { observer } from "mobx-react-lite";
-import { VideoStore } from "../context/videoStore";
 import { VideoContext } from "../context/videoContext";
-import { FaPause, FaPlay } from "react-icons/fa6";
 import PlayPauseButton from "./playPause";
 
 interface CameraProps {
